@@ -1,4 +1,4 @@
-Name,Image_URL,Release Date,Bus,Memory,GPU Clock,Memory Clock,Cores / TMUs / ROPs,Average_Category_Price_IDR
+Name,Image_URL,Release Date,Bus,Memory,GPU Clock,Memory Clock,Cores / TMUs / ROPs,Average Price (IDR)
 Radeon RX 9070 XT,https://tpucdn.com/gpu-specs/images-new/c/4229-front-list.jpg,"Mar 6th, 2025",PCIe 5.0 x16,16 GB / GDDR6 / 256 bit,2970 MHz,2518 MHz,4096 / 256 / 128,14302368
 GeForce RTX 5090,https://tpucdn.com/gpu-specs/images-new/c/4216-front-list.jpg,"Jan 30th, 2025",PCIe 5.0 x16,32 GB / GDDR7 / 512 bit,2407 MHz,1750 MHz,21760 / 680 / 176,61334900
 GeForce RTX 5070,https://tpucdn.com/gpu-specs/images-new/c/4218-front-list.jpg,"Mar 4th, 2025",PCIe 5.0 x16,12 GB / GDDR7 / 192 bit,2512 MHz,1750 MHz,6144 / 192 / 80,12956452
