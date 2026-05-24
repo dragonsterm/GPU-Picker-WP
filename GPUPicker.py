@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 
-st.set_page_config(page_title="Sistem Rekomendasi GPU (SAW)", layout="wide")
+st.set_page_config(page_title="GPU Picker", layout="wide")
 
 @st.cache_data
 def load_data():
@@ -41,8 +41,8 @@ df_all = preprocess_data(df_raw)
 
 # sidebar
 with st.sidebar:
-    st.header("Sistem Rekomendasi SPK")
-    page = st.selectbox("Navigasi", [
+    st.header("GPU Picker")
+    page = st.selectbox("Navigations", [
         "Page 1 - Main Page", 
         "Page 2 - SAW", 
         "Page 3 - Result & Recommendation"
