@@ -5,11 +5,29 @@ import os
 
 st.set_page_config(page_title="GPU Picker", layout="wide")
 
+st.markdown("""
+    <style>
+        /* Warna background Tag */
+        span[data-baseweb="tag"]:has(span[title="NVIDIA"]) { background-color: #76B900 !important; }
+        span[data-baseweb="tag"]:has(span[title="AMD"]) { background-color: #ED1C24 !important; }
+        span[data-baseweb="tag"]:has(span[title="Intel"]) { background-color: #0071C5 !important; }
+        
+        /* Merubah warna text dan icon silang (X) menjadi putih agar kontras */
+        span[data-baseweb="tag"]:has(span[title="NVIDIA"]) *,
+        span[data-baseweb="tag"]:has(span[title="AMD"]) *,
+        span[data-baseweb="tag"]:has(span[title="Intel"]) * {
+            color: white !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 @st.cache_data
 def load_data():
-    file_path = os.path.join("Data", "dataset.csv")
-    df = pd.read_csv(file_path)
-    return df
+    # Try both with and without Data/ subfolder
+    for candidate in [os.path.join("Data", "dataset.csv"), "dataset.csv"]:
+        if os.path.exists(candidate):
+            return pd.read_csv(candidate)
+    raise FileNotFoundError("dataset.csv not found")
 
 def get_manufacturer(name):
     name_lower = str(name).lower()
@@ -61,12 +79,12 @@ with st.sidebar:
         help="Hanya GPU di bawah budget ini yang akan dievaluasi oleh sistem rekomendasi."
     )
     
-    template = st.selectbox("Pilih Template Preferensi", ["Manual", "Gaming", "Budget (Price to Performance)", "Content Creation"])
+    template = st.selectbox("Pilih Template Preferensi", ["Manual", "Gaming", "Price to Performance", "Content Creation"])
     
     # nilai pengaturan
     if template == "Gaming":
         t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.10, 0.15, 0.10, 0.10, 0.10, 0.15, 0.30
-    elif template == "Budget (Price to Performance)":
+    elif template == "Price to Performance":
         t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.25, 0.05, 0.05, 0.05, 0.05, 0.20, 0.35
     elif template == "Content Creation":
         t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.10, 0.25, 0.05, 0.05, 0.20, 0.15, 0.20
@@ -95,25 +113,25 @@ if page == "Page 1 - Main Page":
     
     # Search Container 
     with st.container(border=True):
-        st.markdown("#### Filter Pencarian")
+        st.markdown("#### Search")
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            search_name = st.text_input("Cari Nama GPU", placeholder="contoh: RTX 4070")
+            search_name = st.text_input("Search GPU Name", placeholder="example: RTX 4070")
         with col2:
             max_price = st.slider(
-                "Maksimal Harga (IDR)", 
+                "Price Range (IDR)", 
                 min_value=int(df_all['Price'].min()), 
                 max_value=int(df_all['Price'].max()), 
                 value=int(df_all['Price'].max()),
                 step=500_000
             )
         with col3:
-            min_year = st.slider(
-                "Minimal Tahun Rilis", 
+            max_year = st.slider(
+                "Release Year Range", 
                 min_value=int(df_all['Release_Year'].min()), 
                 max_value=int(df_all['Release_Year'].max()), 
-                value=int(df_all['Release_Year'].min())
+                value=int(df_all['Release_Year'].max())
             )
         
         # opsi advanced options
@@ -122,27 +140,27 @@ if page == "Page 1 - Main Page":
             
             with adv_col1:
                 manufacturer_list = df_all['Manufacturer'].unique().tolist()
-                selected_manufacturers = st.multiselect("Pilih Produsen", manufacturer_list, default=manufacturer_list)
+                selected_manufacturers = st.multiselect("Chose Manufacturers", manufacturer_list, default=manufacturer_list)
                 
             with adv_col2:
                 spec_col1, spec_col2, spec_col3 = st.columns(3)
                 with spec_col1:
                     min_mem = st.slider(
-                        "Minimal Memory (GB)", 
+                        "Minimum Memory (GB)", 
                         min_value=int(df_all['Memory_GB'].min()), 
                         max_value=int(df_all['Memory_GB'].max()), 
                         value=int(df_all['Memory_GB'].min())
                     )
                 with spec_col2:
                     min_clock = st.slider(
-                        "Minimal GPU Clock (MHz)", 
+                        "Minimum GPU Clock (MHz)", 
                         min_value=int(df_all['GPU_Clock_MHz'].min()), 
                         max_value=int(df_all['GPU_Clock_MHz'].max()), 
                         value=int(df_all['GPU_Clock_MHz'].min())
                     )
                 with spec_col3:
                     min_bench = st.slider(
-                        "Minimal Score Benchmark", 
+                        "Minimum Score Benchmark", 
                         min_value=float(df_all['Benchmark_Score'].min()), 
                         max_value=float(df_all['Benchmark_Score'].max()), 
                         value=float(df_all['Benchmark_Score'].min())
@@ -153,13 +171,13 @@ if page == "Page 1 - Main Page":
         (df_all['Name'].str.contains(search_name, case=False, na=False)) &
         (df_all['Manufacturer'].isin(selected_manufacturers)) &
         (df_all['Price'] <= max_price) &
-        (df_all['Release_Year'] >= min_year) &
+        (df_all['Release_Year'] <= max_year) &
         (df_all['Memory_GB'] >= min_mem) &
         (df_all['GPU_Clock_MHz'] >= min_clock) &
         (df_all['Benchmark_Score'] >= min_bench)
     ]
     
-    st.markdown(f"Menampilkan **{len(df_display)}** dari total **{len(df_all)}** GPU dalam dataset:")
+    st.markdown(f"Displaying **{len(df_display)}** of **{len(df_all)}** Total GPU inside the dataset:")
     st.data_editor(
         df_display[['Name', 'Image_URL', 'Release Date', 'Manufacturer', 'Bus', 'Memory', 'GPU Clock', 'Memory Clock', 'Cores / TMUs / ROPs', 'Benchmark', 'Average Price (IDR)']],
         column_config={
@@ -196,7 +214,7 @@ else:
 
     V = np.sum(w * R, axis=1)
 
-    # DataFrame
+    # Dataframe
     df_result = df_eval.copy()
     df_result['Nilai V'] = V
     df_result['Ranking'] = df_result['Nilai V'].rank(ascending=False).astype(int)
@@ -216,54 +234,386 @@ else:
         st.dataframe(df_k, use_container_width=True)
         
         st.subheader("3. Normalisasi Matriks (R)")
+        st.latex(r"""
+        r_{ij} = 
+        \begin{cases} 
+        \frac{x_{ij}}{\max_i x_{ij}} & \text{jika } j \text{ adalah atribut benefit (keuntungan)} \\ 
+        \frac{\min_i x_{ij}}{x_{ij}} & \text{jika } j \text{ adalah atribut cost (biaya)} 
+        \end{cases}
+        """)
         st.dataframe(pd.DataFrame(R, columns=kriteria_names, index=alternatif_names).style.format("{:.4f}"), use_container_width=True)
         
         st.subheader("4. Bobot (w)")
         st.dataframe(pd.DataFrame([w], columns=kriteria_names, index=["Bobot W (Ternormalisasi)"]).style.format("{:.4f}"), use_container_width=True)
         
         st.subheader("5. Hasil Perangkingan Akhir (V)")
+        st.latex(r"V_i = \sum_{j=1}^{n} w_j r_{ij}")
         df_v = pd.DataFrame(V, columns=["Nilai V"], index=alternatif_names).sort_values(by="Nilai V", ascending=False)
         st.dataframe(df_v.style.format("{:.5f}"), use_container_width=True)
 
     # Page 3 hasil dan rekomendasi
     elif page == "Page 3 - Result & Recommendation":
-        st.title("Rekomendasi GPU Terbaik")
-        
+        import base64
+
+        def load_asset_b64(paths, mime):
+            for p in paths:
+                if os.path.exists(p):
+                    with open(p, 'rb') as f:
+                        return f"data:{mime};base64,{base64.b64encode(f.read()).decode()}"
+            return None
+
+        gif_b64  = load_asset_b64(
+            [os.path.join("Asset", "ubmlogo-60-loop.gif"), "ubmlogo-60-loop.gif",
+             "/mnt/user-data/uploads/ubmlogo-60-loop.gif"], "image/gif")
+        logo_b64 = load_asset_b64(
+            [os.path.join("Asset", "UserBenchmarkLogo.png"), "UserBenchmarkLogo.png",
+             "/mnt/user-data/uploads/UserBenchmarkLogo.png"], "image/png")
+
+        # Benchmark csv
+        @st.cache_data
+        def load_userbenchmark():
+            for candidate in [os.path.join("Data", "Used Data", "GPU_UserBenchmarks.csv"), os.path.join("Data", "GPU_UserBenchmarks.csv"), "GPU_UserBenchmarks.csv"]:
+                if os.path.exists(candidate):
+                    ub_path = candidate
+                    break
+            else:
+                return pd.DataFrame()
+            try:
+                ub = pd.read_csv(ub_path)
+                ub = ub[ub['URL'].notna() & (ub['URL'].str.strip() != '')]
+                return ub
+            except Exception:
+                return pd.DataFrame()
+
+        def find_userbenchmark_url(gpu_name, ub_df):
+            if ub_df.empty:
+                return None, None, None
+            name_lower = str(gpu_name).lower()
+            clean = name_lower.replace('geforce ', '').replace('radeon ', '').replace('intel arc ', 'arc ')
+            best_score = 0
+            best_row = None
+            for _, row in ub_df.iterrows():
+                model = str(row.get('Model', '')).lower()
+                tokens = [t for t in clean.split() if len(t) > 1]
+                score = sum(1 for t in tokens if t in model)
+                if score > best_score:
+                    best_score = score
+                    best_row = row
+            if best_row is not None and best_score >= 2:
+                return best_row.get('Rank'), best_row.get('Benchmark'), best_row.get('URL')
+            return None, None, None
+
+        ub_df    = load_userbenchmark()
         best_gpu = df_result.iloc[0]
-        
-        st.success(f"Berikut adalah pilihan terbaik di bawah batas budget yang Anda tetapkan: **{best_gpu['Name']}**")
-        
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            if pd.notna(best_gpu['Image_URL']):
-                st.image(best_gpu['Image_URL'], use_column_width=True)
-            st.metric(label="Total Skor (Nilai V)", value=f"{best_gpu['Nilai V']:.4f}")
-            
-        with col2:
-            st.subheader("Spesifikasi Utama:")
-            st.write(f"- Price: Rp. {int(best_gpu['Price']):,}")
-            st.write(f"- Benchmark Score: {best_gpu['Benchmark']}")
-            st.write(f"- Release Year: {int(best_gpu['Release_Year'])} ({best_gpu['Release Date']})")
-            st.write(f"- Manufacturer: {best_gpu['Manufacturer']}")
-            st.write(f"- Memory: {best_gpu['Memory']}")
-            st.write(f"- GPU Clock Speed: {best_gpu['GPU Clock']}")
-            st.write(f"- Cores / TMUs / ROPs: {best_gpu['Cores / TMUs / ROPs']}")
-            st.write(f"- Bus: {best_gpu['Bus']}")
-        
-        st.divider()
-        st.subheader("Pilihan Alternatif (Ranking 2 - 5)")
-        st.write("Alternatif terbaik selanjutnya untuk budget Anda:")
-        
-        alternatives = df_result.iloc[1:5][['Ranking', 'Name', 'Image_URL', 'Release_Year', 'Memory', 'Cores / TMUs / ROPs', 'Benchmark', 'Average Price (IDR)', 'Nilai V']]
-        st.data_editor(
-            alternatives,
-            column_config={
-                "Image_URL": st.column_config.ImageColumn("Visual"),
-                "Release_Year": st.column_config.NumberColumn("Tahun", format="%d"),
-                "Benchmark": st.column_config.NumberColumn("Score", format="%.1f"),
-                "Average Price (IDR)": st.column_config.NumberColumn("Harga", format="Rp %d")
-            },
-            use_container_width=True,
-            hide_index=True,
-            disabled=True
-        )
+
+        mfg = best_gpu['Manufacturer']
+        if mfg == 'NVIDIA':   mfg_color, mfg_bg = "#76B900", "#76B90018"
+        elif mfg == 'AMD':    mfg_color, mfg_bg = "#ED1C24", "#ED1C2418"
+        elif mfg == 'Intel':  mfg_color, mfg_bg = "#0071C5", "#0071C518"
+        else:                 mfg_color, mfg_bg = "#888888", "#88888818"
+
+        ub_rank, ub_bench, ub_url = find_userbenchmark_url(best_gpu['Name'], ub_df)
+
+        # css
+        st.markdown(f"""
+        <style>
+            /* Use Streamlit's own font stack — no external imports */
+            .p3-root {{ font-family: "Source Sans Pro", sans-serif; }}
+
+            .p3-header {{
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: #fafafa;
+                margin-bottom: 0.15rem;
+            }}
+            .p3-sub {{
+                font-size: 0.82rem;
+                color: #888;
+                margin-bottom: 1.4rem;
+            }}
+
+            /* Winner card */
+            .winner-card {{
+                background: #161616;
+                border: 1px solid #272727;
+                border-left: 4px solid {mfg_color};
+                border-radius: 10px;
+                padding: 1.5rem 1.8rem;
+                margin-bottom: 0.8rem;
+            }}
+            .gpu-name {{
+                font-size: 1.6rem;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 0.25rem;
+            }}
+            .mfg-badge {{
+                display: inline-block;
+                background: {mfg_color};
+                color: #fff;
+                font-size: 0.7rem;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+                padding: 2px 10px;
+                border-radius: 3px;
+                margin-bottom: 1.1rem;
+                text-transform: uppercase;
+                box-shadow: none !important;
+                text-shadow: none !important;
+            }}
+            .spec-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+                gap: 0.6rem;
+            }}
+            .spec-item {{
+                background: #1d1d1d;
+                border: 1px solid #2a2a2a;
+                border-radius: 7px;
+                padding: 0.6rem 0.85rem;
+            }}
+            .spec-label {{
+                font-size: 0.65rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                color: #666;
+                margin-bottom: 0.15rem;
+            }}
+            .spec-value {{
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: #e0e0e0;
+            }}
+
+            /* SAW score */
+            .score-box {{
+                background: {mfg_bg};
+                border: 1px solid {mfg_color}44;
+                border-radius: 9px;
+                padding: 0.9rem 1rem;
+                text-align: center;
+                margin-top: 0.75rem;
+            }}
+            .score-lbl {{ font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: #777; margin-bottom: 0.2rem; }}
+            .score-val {{ font-size: 2.2rem; font-weight: 700; color: {mfg_color}; line-height: 1; }}
+
+            /* UserBenchmark badge — mimics official style */
+            .ub-badge {{
+                background: #111;
+                border: 1px solid #2a2a2a;
+                border-radius: 9px;
+                padding: 0.85rem 1rem;
+                margin-top: 0.75rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.3rem;
+            }}
+            .ub-row {{
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }}
+            .ub-site {{
+                font-size: 1.05rem;
+                font-weight: 700;
+                color: #fff;
+                text-decoration: none;
+            }}
+            .ub-site:hover {{
+                text-decoration: underline;
+            }}
+            .ub-stat {{
+                font-size: 0.78rem;
+                color: #888;
+            }}
+            .ub-stat strong {{ color: #bbb; }}
+
+            /* Alt section */
+            .alt-section-title {{
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: #888;
+                margin: 1.6rem 0 0.7rem 0;
+                padding-bottom: 0.4rem;
+                border-bottom: 1px solid #222;
+            }}
+            .alt-card {{
+                background: #141414;
+                border: 1px solid #222;
+                border-radius: 9px;
+                padding: 0.75rem 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.9rem;
+                margin-bottom: 0.55rem;
+            }}
+            .alt-card:hover {{ border-color: #383838; }}
+            .alt-rank {{
+                font-size: 1.3rem;
+                font-weight: 700;
+                color: #3a3a3a;
+                min-width: 30px;
+                text-align: center;
+            }}
+            .alt-gpu-img {{
+                width: 72px;
+                height: 46px;
+                object-fit: contain;
+                border-radius: 4px;
+                background: #1a1a1a;
+                flex-shrink: 0;
+            }}
+            .alt-gpu-img-placeholder {{
+                width: 72px;
+                height: 46px;
+                background: #1e1e1e;
+                border-radius: 4px;
+                flex-shrink: 0;
+            }}
+            .alt-name {{ font-size: 0.92rem; font-weight: 600; color: #ddd; }}
+            .alt-meta {{ font-size: 0.72rem; color: #666; margin-top: 2px; }}
+            .alt-ub-gif {{
+                width: 36px;
+                height: 36px;
+                object-fit: contain;
+                flex-shrink: 0;
+                cursor: pointer;
+                opacity: 0.85;
+                transition: opacity 0.2s;
+            }}
+            .alt-ub-gif:hover {{ opacity: 1; }}
+            .alt-score {{ font-size: 0.9rem; font-weight: 700; color: #aaa; white-space: nowrap; }}
+            .alt-price {{ font-size: 0.75rem; color: #999; white-space: nowrap; }}
+            .alt-bench {{ font-size: 0.72rem; color: #666; }}
+        </style>
+        <div class="p3-root">
+        <div class="p3-header">GPU Recommendation</div>
+        <div class="p3-sub">GPU yang paling sesuai berdasarkan Max Budget</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        img_col, info_col = st.columns([1, 2], gap="large")
+
+        with img_col:
+            if pd.notna(best_gpu.get('Image_URL')):
+                st.image(best_gpu['Image_URL'], use_container_width=True)
+
+            # score box
+            st.markdown(f"""
+            <div class="score-box">
+                <div class="score-lbl">SAW Score (Nilai V)</div>
+                <div class="score-val">{best_gpu['Nilai V']:.4f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # UserBenchmark container
+            if ub_url:
+                rank_str  = f"GPU Rank <strong>#{int(ub_rank)}</strong>" if ub_rank and not pd.isna(ub_rank) else ""
+                bench_str = f"Average Benchmark: <strong>{float(ub_bench):.1f}%</strong>" if ub_bench and not pd.isna(ub_bench) else ""
+                stat_line = " &nbsp;&bull;&nbsp; ".join(filter(None, [rank_str, bench_str]))
+                gif_img   = f'<img src="{gif_b64}" width="44" height="44" style="object-fit:contain;">' if gif_b64 else ""
+                logo_img  = f'<a class="ub-site" href="{ub_url}" target="_blank">UserBenchmark.com</a>'
+                st.markdown(f"""
+                <div class="ub-badge">
+                    <div class="ub-row">
+                        {gif_img}
+                        {logo_img}
+                    </div>
+                    <div class="ub-stat">{stat_line}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                gif_img  = f'<img src="{gif_b64}" width="36" height="36" style="object-fit:contain; opacity:0.8;">' if gif_b64 else ""
+                logo_img = '<span class="ub-site" style="opacity:0.8;">UserBenchmark.com</span>'
+                st.markdown(f"""
+                <div class="ub-badge">
+                    <div class="ub-row">{gif_img} {logo_img}</div>
+                    <div class="ub-stat" style="color:#aaa;">No matching entry found</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with info_col:
+            st.markdown(f"""
+            <div class="winner-card">
+                <div class="gpu-name">{best_gpu['Name']}</div>
+                <div class="mfg-badge">{mfg}</div>
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <div class="spec-label">Price</div>
+                        <div class="spec-value">Rp {int(best_gpu['Price']):,}</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Benchmark Score</div>
+                        <div class="spec-value">{best_gpu['Benchmark']}</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Release Date</div>
+                        <div class="spec-value">{best_gpu['Release Date']}</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Memory</div>
+                        <div class="spec-value">{best_gpu['Memory']}</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">GPU Clock</div>
+                        <div class="spec-value">{best_gpu['GPU Clock']}</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Cores / TMUs / ROPs</div>
+                        <div class="spec-value">{best_gpu['Cores / TMUs / ROPs']}</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Bus Interface</div>
+                        <div class="spec-value">{best_gpu['Bus']}</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Alternative 
+        st.markdown('<div class="alt-section-title">Alternative Options &mdash; Rank 2 to 5</div>', unsafe_allow_html=True)
+
+        for _, row in df_result.iloc[1:5].iterrows():
+            alt_mfg = row['Manufacturer']
+            if alt_mfg == 'NVIDIA':  alt_color = "#76B900"
+            elif alt_mfg == 'AMD':   alt_color = "#ED1C24"
+            elif alt_mfg == 'Intel': alt_color = "#0071C5"
+            else:                    alt_color = "#888"
+
+            _, _, alt_ub_url = find_userbenchmark_url(row['Name'], ub_df)
+
+            # Gpu picture from dataset
+            img_url = row.get('Image_URL', '')
+            if pd.notna(img_url) and str(img_url).strip():
+                gpu_img_html = f'<img src="{img_url}" class="alt-gpu-img" />'
+            else:
+                gpu_img_html = '<div class="alt-gpu-img-placeholder"></div>'
+                
+            if alt_ub_url and logo_b64:
+                ub_logo_html = f'<a href="{alt_ub_url}" target="_blank" style="margin-left: 6px;"><img src="{logo_b64}" height="14" style="object-fit:contain; vertical-align:middle;" title="View on UserBenchmark" /></a>'
+            elif alt_ub_url:
+                ub_logo_html = f'<a href="{alt_ub_url}" target="_blank" style="margin-left: 6px; color:#fff; font-size:0.72rem; text-decoration:none;">[UB]</a>'
+            else:
+                ub_logo_html = ''
+
+            st.markdown(f"""
+            <div class="alt-card">
+                <div class="alt-rank">#{int(row['Ranking'])}</div>
+                {gpu_img_html}
+                <div style="min-width:46px;">
+                    <span style="background:{alt_color}; color:#fff; font-size:0.6rem; font-weight:700; letter-spacing:0.1em; padding:2px 7px; border-radius:3px; text-transform:uppercase; box-shadow: none !important; text-shadow: none !important;">{alt_mfg}</span>
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <div class="alt-name">{row['Name']}{ub_logo_html}</div>
+                    <div class="alt-meta">{row['Memory']} &nbsp;&bull;&nbsp; {int(row['Release_Year'])}</div>
+                </div>
+                <div style="text-align:right; flex-shrink:0;">
+                    <div class="alt-score">V: {row['Nilai V']:.4f}</div>
+                    <div class="alt-price">Rp {int(row['Average Price (IDR)']):,}</div>
+                    <div class="alt-bench">Score: {row['Benchmark']}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)

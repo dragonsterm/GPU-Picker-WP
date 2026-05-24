@@ -17,7 +17,7 @@ GeForce RTX 4070,https://tpucdn.com/gpu-specs/images-new/c/3924-front-list.jpg,"
 GeForce GTX 1660 SUPER,https://tpucdn.com/gpu-specs/images-new/c/3458-front-list.jpg,"Oct 29th, 2019",PCIe 3.0 x16,6 GB / GDDR6 / 192 bit,1785 MHz,1750 MHz,1408 / 88 / 48,2976667,28.6
 Radeon RX 6600,https://tpucdn.com/gpu-specs/images-new/c/3696-front-list.jpg,"Oct 13th, 2021",PCIe 4.0 x8,8 GB / GDDR6 / 128 bit,2491 MHz,1750 MHz,1792 / 112 / 64,3511000,36.4
 Radeon RX 9070,https://tpucdn.com/gpu-specs/images-new/c/4250-front-list.jpg,"Mar 6th, 2025",PCIe 5.0 x16,16 GB / GDDR6 / 256 bit,2520 MHz,2518 MHz,3584 / 224 / 128,11405000,88.8
-Arc B580,https://tpucdn.com/gpu-specs/images-new/c/4244-front-list.jpg,"Dec 13th, 2024",PCIe 4.0 x8,12 GB / GDDR6 / 192 bit,2670 MHz,2375 MHz,2560 / 160 / 80,5575000,0.0
+Arc B580,https://tpucdn.com/gpu-specs/images-new/c/4244-front-list.jpg,"Dec 13th, 2024",PCIe 4.0 x8,12 GB / GDDR6 / 192 bit,2670 MHz,2375 MHz,2560 / 160 / 80,5575000,46.1
 GeForce GTX 1050 Ti,https://tpucdn.com/gpu-specs/images-new/c/2885-front-list.jpg,"Oct 25th, 2016",PCIe 3.0 x16,4 GB / GDDR5 / 128 bit,1392 MHz,1752 MHz,768 / 48 / 32,2226667,12.2
 GeForce GTX 1650,https://tpucdn.com/gpu-specs/images-new/c/3366-front-list.jpg,"Apr 23rd, 2019",PCIe 3.0 x16,4 GB / GDDR5 / 128 bit,1665 MHz,2001 MHz,896 / 56 / 32,2047000,18.1
 Radeon RX 7800 XT,https://tpucdn.com/gpu-specs/images-new/c/3839-front-list.jpg,"Aug 25th, 2023",PCIe 4.0 x16,16 GB / GDDR6 / 256 bit,2430 MHz,2438 MHz,3840 / 240 / 96,9030000,75.6
