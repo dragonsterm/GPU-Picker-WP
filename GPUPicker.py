@@ -193,22 +193,30 @@ else:
         st.error(f"Tidak ada GPU valid yang ditemukan di bawah budget Rp. {max_budget:,}. Silakan tambah Max Budget pada Sidebar.")
         st.stop()
 
+    # 1 - MENGIDENTIFIKASI KRITERIA: Menentukan atribut (0 untuk Cost/Biaya, 1 untuk Benefit/Keuntungan)
     k = np.array([0, 1, 1, 1, 1, 1, 1]) 
+    
+    # 2 - MEMBENTUK MATRIKS KEPUTUSAN (X): Mengambil nilai data sesuai kriteria untuk dievaluasi
     x = df_eval[['Price', 'Memory_GB', 'GPU_Clock_MHz', 'Memory_Clock_MHz', 'Cores', 'Release_Year', 'Benchmark_Score']].values
     kriteria_names = ["Price (IDR)", "Memory (GB)", "GPU Clock (MHz)", "Memory Clock (MHz)", "Cores", "Tahun Rilis", "Benchmark Score"]
     alternatif_names = df_eval['Name'].values
 
     m, n = x.shape
+    
+    # 3 - NORMALISASI MATRIKS (R): Membagi setiap nilai dengan nilai maksimum (benefit) atau membagi nilai minimum dengan nilai asli (cost)
     R = np.zeros((m, n)) 
     for j in range(n):
         if k[j] == 1: 
+            # Normalisasi untuk Kriteria Benefit
             R[:, j] = x[:, j] / np.max(x[:, j])
         else: 
+            # Normalisasi untuk Kriteria Cost
             R[:, j] = np.min(x[:, j]) / x[:, j]
 
+    # 4 - PERHITUNGAN PREFERENSI (V): Mengalikan matriks normalisasi (R) dengan bobot kepentingan (W)
     V = np.sum(w * R, axis=1)
 
-    # Dataframe
+    # 5 - PERANGKINGAN: Memasukkan nilai V ke dataframe lalu diurutkan dari nilai V tertinggi
     df_result = df_eval.copy()
     df_result['Nilai V'] = V
     df_result['Ranking'] = df_result['Nilai V'].rank(ascending=False).astype(int)
