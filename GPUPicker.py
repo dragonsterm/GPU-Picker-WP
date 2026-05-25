@@ -2,28 +2,22 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="GPU Picker", layout="wide")
 
-st.markdown("""
-    <style>
-        /* Warna background Tag */
-        span[data-baseweb="tag"]:has(span[title="NVIDIA"]) { background-color: #76B900 !important; }
-        span[data-baseweb="tag"]:has(span[title="AMD"]) { background-color: #ED1C24 !important; }
-        span[data-baseweb="tag"]:has(span[title="Intel"]) { background-color: #0071C5 !important; }
-        
-        /* Merubah warna text dan icon silang (X) menjadi putih agar kontras */
-        span[data-baseweb="tag"]:has(span[title="NVIDIA"]) *,
-        span[data-baseweb="tag"]:has(span[title="AMD"]) *,
-        span[data-baseweb="tag"]:has(span[title="Intel"]) * {
-            color: white !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+# Load css
+def load_css(file_name):
+    if os.path.exists(file_name):
+        with open(file_name) as f:
+            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    else:
+        st.warning(f"CSS file not found: {file_name}")
+    
+load_css(os.path.join("style", "base.css"))
 
 @st.cache_data
 def load_data():
-    # Try both with and without Data/ subfolder
     for candidate in [os.path.join("Data", "dataset.csv"), "dataset.csv"]:
         if os.path.exists(candidate):
             return pd.read_csv(candidate)
@@ -250,6 +244,42 @@ else:
         st.latex(r"V_i = \sum_{j=1}^{n} w_j r_{ij}")
         df_v = pd.DataFrame(V, columns=["Nilai V"], index=alternatif_names).sort_values(by="Nilai V", ascending=False)
         st.dataframe(df_v.style.format("{:.5f}"), use_container_width=True)
+        
+        st.subheader("6. Visualisasi Data (SAW)")
+        
+        col_fig1, col_fig2 = st.columns(2)
+        
+        with col_fig1:
+            st.markdown("##### Top 10 GPU Berdasarkan Nilai V")
+            
+            top_10 = df_result.head(10).sort_values(by="Nilai V", ascending=True)
+            
+            color_map = {
+                'NVIDIA': '#76B900',
+                'AMD': '#ED1C24',
+                'Intel': '#0071C5'
+            }
+            
+            bar_colors = [color_map.get(mfg, '#888888') for mfg in top_10['Manufacturer']]
+            
+            fig1, ax1 = plt.subplots(figsize=(7, 5))
+            
+            ax1.barh(top_10['Name'], top_10['Nilai V'], color=bar_colors)
+            ax1.set_xlabel('Nilai V (Score Akhir)')
+            ax1.set_title('Top 10 GPU Rekomendasi')
+            plt.tight_layout()
+            st.pyplot(fig1)
+
+        with col_fig2:
+            st.markdown("##### Proporsi Bobot Kriteria (w)")
+            fig2, ax2 = plt.subplots(figsize=(6, 5))
+            
+            colors = plt.cm.Set3.colors
+            ax2.pie(w, labels=kriteria_names, autopct='%1.1f%%', startangle=140, colors=colors)
+            ax2.axis('equal')
+            ax2.set_title('Distribusi Kepentingan Kriteria')
+            plt.tight_layout()
+            st.pyplot(fig2)
 
     # Page 3 hasil dan rekomendasi
     elif page == "Page 3 - Result & Recommendation":
@@ -314,184 +344,18 @@ else:
 
         ub_rank, ub_bench, ub_url = find_userbenchmark_url(best_gpu['Name'], ub_df)
 
-        # css
+        # inject css
         st.markdown(f"""
         <style>
-            /* Use Streamlit's own font stack — no external imports */
-            .p3-root {{ font-family: "Source Sans Pro", sans-serif; }}
-
-            .p3-header {{
-                font-size: 1.75rem;
-                font-weight: 700;
-                color: #fafafa;
-                margin-bottom: 0.15rem;
+            :root {{
+                --mfg-color: {mfg_color};
+                --mfg-bg: {mfg_bg};
+                --mfg-border: {mfg_color}44;
             }}
-            .p3-sub {{
-                font-size: 0.82rem;
-                color: #888;
-                margin-bottom: 1.4rem;
-            }}
-
-            /* Winner card */
-            .winner-card {{
-                background: #161616;
-                border: 1px solid #272727;
-                border-left: 4px solid {mfg_color};
-                border-radius: 10px;
-                padding: 1.5rem 1.8rem;
-                margin-bottom: 0.8rem;
-            }}
-            .gpu-name {{
-                font-size: 1.6rem;
-                font-weight: 700;
-                color: #fff;
-                margin-bottom: 0.25rem;
-            }}
-            .mfg-badge {{
-                display: inline-block;
-                background: {mfg_color};
-                color: #fff;
-                font-size: 0.7rem;
-                font-weight: 700;
-                letter-spacing: 0.12em;
-                padding: 2px 10px;
-                border-radius: 3px;
-                margin-bottom: 1.1rem;
-                text-transform: uppercase;
-                box-shadow: none !important;
-                text-shadow: none !important;
-            }}
-            .spec-grid {{
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
-                gap: 0.6rem;
-            }}
-            .spec-item {{
-                background: #1d1d1d;
-                border: 1px solid #2a2a2a;
-                border-radius: 7px;
-                padding: 0.6rem 0.85rem;
-            }}
-            .spec-label {{
-                font-size: 0.65rem;
-                text-transform: uppercase;
-                letter-spacing: 0.1em;
-                color: #666;
-                margin-bottom: 0.15rem;
-            }}
-            .spec-value {{
-                font-size: 0.95rem;
-                font-weight: 600;
-                color: #e0e0e0;
-            }}
-
-            /* SAW score */
-            .score-box {{
-                background: {mfg_bg};
-                border: 1px solid {mfg_color}44;
-                border-radius: 9px;
-                padding: 0.9rem 1rem;
-                text-align: center;
-                margin-top: 0.75rem;
-            }}
-            .score-lbl {{ font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: #777; margin-bottom: 0.2rem; }}
-            .score-val {{ font-size: 2.2rem; font-weight: 700; color: {mfg_color}; line-height: 1; }}
-
-            /* UserBenchmark badge — mimics official style */
-            .ub-badge {{
-                background: #111;
-                border: 1px solid #2a2a2a;
-                border-radius: 9px;
-                padding: 0.85rem 1rem;
-                margin-top: 0.75rem;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 0.3rem;
-            }}
-            .ub-row {{
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }}
-            .ub-site {{
-                font-size: 1.05rem;
-                font-weight: 700;
-                color: #fff;
-                text-decoration: none;
-            }}
-            .ub-site:hover {{
-                text-decoration: underline;
-            }}
-            .ub-stat {{
-                font-size: 0.78rem;
-                color: #888;
-            }}
-            .ub-stat strong {{ color: #bbb; }}
-
-            /* Alt section */
-            .alt-section-title {{
-                font-size: 0.75rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.12em;
-                color: #888;
-                margin: 1.6rem 0 0.7rem 0;
-                padding-bottom: 0.4rem;
-                border-bottom: 1px solid #222;
-            }}
-            .alt-card {{
-                background: #141414;
-                border: 1px solid #222;
-                border-radius: 9px;
-                padding: 0.75rem 1rem;
-                display: flex;
-                align-items: center;
-                gap: 0.9rem;
-                margin-bottom: 0.55rem;
-            }}
-            .alt-card:hover {{ border-color: #383838; }}
-            .alt-rank {{
-                font-size: 1.3rem;
-                font-weight: 700;
-                color: #3a3a3a;
-                min-width: 30px;
-                text-align: center;
-            }}
-            .alt-gpu-img {{
-                width: 72px;
-                height: 46px;
-                object-fit: contain;
-                border-radius: 4px;
-                background: #1a1a1a;
-                flex-shrink: 0;
-            }}
-            .alt-gpu-img-placeholder {{
-                width: 72px;
-                height: 46px;
-                background: #1e1e1e;
-                border-radius: 4px;
-                flex-shrink: 0;
-            }}
-            .alt-name {{ font-size: 0.92rem; font-weight: 600; color: #ddd; }}
-            .alt-meta {{ font-size: 0.72rem; color: #666; margin-top: 2px; }}
-            .alt-ub-gif {{
-                width: 36px;
-                height: 36px;
-                object-fit: contain;
-                flex-shrink: 0;
-                cursor: pointer;
-                opacity: 0.85;
-                transition: opacity 0.2s;
-            }}
-            .alt-ub-gif:hover {{ opacity: 1; }}
-            .alt-score {{ font-size: 0.9rem; font-weight: 700; color: #aaa; white-space: nowrap; }}
-            .alt-price {{ font-size: 0.75rem; color: #999; white-space: nowrap; }}
-            .alt-bench {{ font-size: 0.72rem; color: #666; }}
         </style>
         <div class="p3-root">
-        <div class="p3-header">GPU Recommendation</div>
-        <div class="p3-sub">GPU yang paling sesuai berdasarkan Max Budget</div>
+            <div class="p3-header">GPU Recommendation</div>
+            <div class="p3-sub">GPU yang paling sesuai berdasarkan Max Budget</div>
         </div>
         """, unsafe_allow_html=True)
 
