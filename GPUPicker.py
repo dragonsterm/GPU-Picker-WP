@@ -88,17 +88,51 @@ with st.sidebar:
     st.markdown("#### Bobot Kriteria")
     d_disable = template != "Manual"
     
-    bar_price = st.slider("Harga (Cost)", min_value=0.01, max_value=1.00, value=t_price, step=0.01, disabled=d_disable)
-    bar_mem = st.slider("Memory GB (Benefit)", min_value=0.01, max_value=1.00, value=t_mem, step=0.01, disabled=d_disable)
-    bar_gclk = st.slider("GPU Clock (Benefit)", min_value=0.01, max_value=1.00, value=t_gclk, step=0.01, disabled=d_disable)
-    bar_mclk = st.slider("Memory Clock (Benefit)", min_value=0.01, max_value=1.00, value=t_mclk, step=0.01, disabled=d_disable)
-    bar_core = st.slider("Cores (Benefit)", min_value=0.01, max_value=1.00, value=t_core, step=0.01, disabled=d_disable)
-    bar_year = st.slider("Tahun Rilis (Benefit)", min_value=0.01, max_value=1.00, value=t_year, step=0.01, disabled=d_disable)
-    bar_bench = st.slider("Benchmark (Benefit)", min_value=0.01, max_value=1.00, value=t_bench, step=0.01, disabled=d_disable)
+    # Harga
+    use_price = st.toggle("Gunakan Harga (Cost)", value=True)
+    bar_price = st.slider("Bobot Harga", min_value=0.01, max_value=1.00, value=t_price, step=0.01, disabled=d_disable or not use_price)
     
-    # Menghitung bobot W
-    bobot_awal = np.array([bar_price, bar_mem, bar_gclk, bar_mclk, bar_core, bar_year, bar_bench])
-    w = bobot_awal / np.sum(bobot_awal)
+    # Memory
+    use_mem = st.toggle("Gunakan Memory GB (Benefit)", value=True)
+    bar_mem = st.slider("Bobot Memory GB", min_value=0.01, max_value=1.00, value=t_mem, step=0.01, disabled=d_disable or not use_mem)
+    
+    # GPU Clock
+    use_gclk = st.toggle("Gunakan GPU Clock (Benefit)", value=True)
+    bar_gclk = st.slider("Bobot GPU Clock", min_value=0.01, max_value=1.00, value=t_gclk, step=0.01, disabled=d_disable or not use_gclk)
+    
+    # Memory Clock
+    use_mclk = st.toggle("Gunakan Memory Clock (Benefit)", value=True)
+    bar_mclk = st.slider("Bobot Memory Clock", min_value=0.01, max_value=1.00, value=t_mclk, step=0.01, disabled=d_disable or not use_mclk)
+    
+    # Cores
+    use_core = st.toggle("Gunakan Cores (Benefit)", value=True)
+    bar_core = st.slider("Bobot Cores", min_value=0.01, max_value=1.00, value=t_core, step=0.01, disabled=d_disable or not use_core)
+    
+    # Tahun Rilis
+    use_year = st.toggle("Gunakan Tahun Rilis (Benefit)", value=True)
+    bar_year = st.slider("Bobot Tahun Rilis", min_value=0.01, max_value=1.00, value=t_year, step=0.01, disabled=d_disable or not use_year)
+    
+    # Benchmark
+    use_bench = st.toggle("Gunakan Benchmark (Benefit)", value=True)
+    bar_bench = st.slider("Bobot Benchmark", min_value=0.01, max_value=1.00, value=t_bench, step=0.01, disabled=d_disable or not use_bench)
+    
+    # Menghitung bobot W berdasarkan status Toggle
+    bobot_awal = np.array([
+        bar_price if use_price else 0.0,
+        bar_mem if use_mem else 0.0,
+        bar_gclk if use_gclk else 0.0,
+        bar_mclk if use_mclk else 0.0,
+        bar_core if use_core else 0.0,
+        bar_year if use_year else 0.0,
+        bar_bench if use_bench else 0.0
+    ])
+    
+    if np.sum(bobot_awal) == 0:
+        st.warning("Silakan aktifkan setidaknya satu kriteria SPK.")
+        w = np.zeros_like(bobot_awal)
+    else:
+        w = bobot_awal / np.sum(bobot_awal)
+    
     
 # Page 1
 if page == "Page 1 - Main Page":
@@ -193,30 +227,36 @@ else:
         st.error(f"Tidak ada GPU valid yang ditemukan di bawah budget Rp. {max_budget:,}. Silakan tambah Max Budget pada Sidebar.")
         st.stop()
 
-    # 1 - MENGIDENTIFIKASI KRITERIA: Menentukan atribut (0 untuk Cost/Biaya, 1 untuk Benefit/Keuntungan)
-    k = np.array([0, 1, 1, 1, 1, 1, 1]) 
+    # 1 - IDENTIFIKASI KRITERIA AKTIF (Filter kolom jika bobot bernilai > 0)
+    aktif_idx = [i for i, val in enumerate(bobot_awal) if val > 0]
     
-    # 2 - MEMBENTUK MATRIKS KEPUTUSAN (X): Mengambil nilai data sesuai kriteria untuk dievaluasi
-    x = df_eval[['Price', 'Memory_GB', 'GPU_Clock_MHz', 'Memory_Clock_MHz', 'Cores', 'Release_Year', 'Benchmark_Score']].values
-    kriteria_names = ["Price (IDR)", "Memory (GB)", "GPU Clock (MHz)", "Memory Clock (MHz)", "Cores", "Tahun Rilis", "Benchmark Score"]
+    all_k = np.array([0, 1, 1, 1, 1, 1, 1]) 
+    all_cols = ['Price', 'Memory_GB', 'GPU_Clock_MHz', 'Memory_Clock_MHz', 'Cores', 'Release_Year', 'Benchmark_Score']
+    all_kriteria_names = ["Price (IDR)", "Memory (GB)", "GPU Clock (MHz)", "Memory Clock (MHz)", "Cores", "Tahun Rilis", "Benchmark Score"]
+    
+    k = all_k[aktif_idx]
+    cols_aktif = [all_cols[i] for i in aktif_idx]
+    kriteria_names = [all_kriteria_names[i] for i in aktif_idx]
+    w_aktif = w[aktif_idx]
+    
+    # 2 - MEMBENTUK MATRIKS KEPUTUSAN (X): Hanya mengambil kolom yang aktif
+    x = df_eval[cols_aktif].values
     alternatif_names = df_eval['Name'].values
 
     m, n = x.shape
     
-    # 3 - NORMALISASI MATRIKS (R): Membagi setiap nilai dengan nilai maksimum (benefit) atau membagi nilai minimum dengan nilai asli (cost)
+    # 3 - NORMALISASI MATRIKS (R)
     R = np.zeros((m, n)) 
     for j in range(n):
         if k[j] == 1: 
-            # Normalisasi untuk Kriteria Benefit
             R[:, j] = x[:, j] / np.max(x[:, j])
         else: 
-            # Normalisasi untuk Kriteria Cost
             R[:, j] = np.min(x[:, j]) / x[:, j]
 
-    # 4 - PERHITUNGAN PREFERENSI (V): Mengalikan matriks normalisasi (R) dengan bobot kepentingan (W)
-    V = np.sum(w * R, axis=1)
+    # 4 - PERHITUNGAN PREFERENSI (V): Kalikan normalisasi dengan bobot yg aktif
+    V = np.sum(w_aktif * R, axis=1)
 
-    # 5 - PERANGKINGAN: Memasukkan nilai V ke dataframe lalu diurutkan dari nilai V tertinggi
+    # 5 - PERANGKINGAN: Memasukkan nilai V ke dataframe lalu diurutkan
     df_result = df_eval.copy()
     df_result['Nilai V'] = V
     df_result['Ranking'] = df_result['Nilai V'].rank(ascending=False).astype(int)
@@ -246,7 +286,7 @@ else:
         st.dataframe(pd.DataFrame(R, columns=kriteria_names, index=alternatif_names).style.format("{:.4f}"), use_container_width=True)
         
         st.subheader("4. Bobot (w)")
-        st.dataframe(pd.DataFrame([w], columns=kriteria_names, index=["Bobot W (Ternormalisasi)"]).style.format("{:.4f}"), use_container_width=True)
+        st.dataframe(pd.DataFrame([w_aktif], columns=kriteria_names, index=["Bobot W (Ternormalisasi)"]).style.format("{:.4f}"), use_container_width=True)
         
         st.subheader("5. Hasil Perangkingan Akhir (V)")
         st.latex(r"V_i = \sum_{j=1}^{n} w_j r_{ij}")
@@ -283,7 +323,7 @@ else:
             fig2, ax2 = plt.subplots(figsize=(6, 5))
             
             colors = plt.cm.Set3.colors
-            ax2.pie(w, labels=kriteria_names, autopct='%1.1f%%', startangle=140, colors=colors)
+            ax2.pie(w_aktif, labels=kriteria_names, autopct='%1.1f%%', startangle=140, colors=colors)
             ax2.axis('equal')
             ax2.set_title('Distribusi Kepentingan Kriteria')
             plt.tight_layout()
