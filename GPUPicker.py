@@ -143,6 +143,45 @@ with st.sidebar:
     
 # Page 1
 if page == "Page 1 - Main Page":
+    total_gpu = len(df_all)
+    
+    hero_section = f"""
+    <style>
+    @keyframes countUpAnim {{
+        from {{ --num: 0; }}
+        to {{ --num: {total_gpu}; }}
+    }}
+    </style>
+    <div class="hero-container">
+        <div class="hero-col-left">
+            <div class="top-left">
+                <span class="hero-app-name">GPUPICKER</span>
+            </div>
+            <div class="bottom-left">
+                <div class="brands-reveal">
+                    <div class="brands-rotor">
+                        <div class="brand-word">Nvidia</div>
+                        <div class="brand-word">AMD</div>
+                        <div class="brand-word">Intel</div>
+                        <div class="brand-word">Nvidia</div> 
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-col-right">
+            <div class="top-right">
+                <span class="hero-number"></span>
+                <span class="hero-text-large">GPU Recorded</span>
+            </div>
+            <div class="bottom-right">
+                <span class="hero-text-large">in Database</span>
+            </div>
+        </div>
+    </div>
+    """
+    
+    st.markdown(hero_section, unsafe_allow_html=True)
+    
     st.title("Explore GPU Database")
     st.write("Telusuri seluruh database GPU secara bebas menggunakan fungsionalitas pencarian di bawah ini.")
     

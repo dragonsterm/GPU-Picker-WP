@@ -1,6 +1,4 @@
-/* =========================================
-   Global Tags (NVIDIA, AMD, Intel)
-========================================= */
+/* Global Tags (NVIDIA, AMD, Intel) */
 span[data-baseweb="tag"]:has(span[title="NVIDIA"]) { background-color: #76B900 !important; }
 span[data-baseweb="tag"]:has(span[title="AMD"]) { background-color: #ED1C24 !important; }
 span[data-baseweb="tag"]:has(span[title="Intel"]) { background-color: #0071C5 !important; }
@@ -10,11 +8,104 @@ span[data-baseweb="tag"]:has(span[title="AMD"]) *,
 span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     color: white !important;
 }
+/* Page 1 */
 
-/* =========================================
-   Page 3 - Result & Recommendation
-========================================= */
-/* Use Streamlit's own font stack — no external imports */
+@property --num {
+    syntax: '<integer>';
+    initial-value: 0;
+    inherits: false;
+}
+.hero-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 28px;
+    padding: 3.5rem 0 2.5rem 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    color: #FFFFFF;
+    opacity: 0;
+    animation: fadeIn 1s forwards 0.2s;
+}
+.hero-col-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+.hero-col-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.top-left, .top-right { height: 3.8rem; }
+.bottom-left, .bottom-right { height: 2.6rem; margin-top: 5px; }
+.top-left {
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 7px;
+}
+.top-right {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+.bottom-right {
+    display: flex;
+    align-items: center;
+}
+.hero-app-name {
+    font-size: 0.70rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    opacity: 0.5;
+}
+.hero-number {
+    font-size: 3.8rem;
+    font-weight: 800;
+    line-height: 1;
+    counter-reset: gpu-counter var(--num);
+    animation: countUpAnim 2s ease-out forwards 0.4s;
+}
+.hero-number::after {
+    content: counter(gpu-counter);
+}
+.hero-text-large {
+    font-size: 2.2rem;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+    line-height: 1;
+    white-space: nowrap;
+}
+.brands-reveal {
+    height: 2.6rem;
+    overflow: hidden;
+    position: relative;
+}
+.brands-rotor {
+    display: flex;
+    flex-direction: column;
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-align: right;
+    animation: spinBrands 6s infinite cubic-bezier(0.64, 0.04, 0.35, 1) 2.6s;
+}
+.brand-word {
+    height: 2.6rem;
+    line-height: 2.6rem;
+}
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+@keyframes spinBrands {
+    0%, 15% { transform: translateY(0); }
+    30%, 45% { transform: translateY(-2.6rem); }
+    60%, 75% { transform: translateY(-5.2rem); }
+    90%, 100% { transform: translateY(-7.8rem); }
+}
+
+/* Page 3 */
 .p3-root { font-family: "Source Sans Pro", sans-serif; }
 
 .p3-header {
@@ -94,7 +185,7 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
 .score-lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: #777; margin-bottom: 0.2rem; }
 .score-val { font-size: 2.2rem; font-weight: 700; color: var(--mfg-color); line-height: 1; }
 
-/* UserBenchmark badge — mimics official style */
+/* Userbenchmark badge */
 .ub-badge {
     background: #111;
     border: 1px solid #2a2a2a;
