@@ -1,20 +1,29 @@
 /* Global Tags (NVIDIA, AMD, Intel) */
-span[data-baseweb="tag"]:has(span[title="NVIDIA"]) { background-color: #76B900 !important; }
-span[data-baseweb="tag"]:has(span[title="AMD"]) { background-color: #ED1C24 !important; }
-span[data-baseweb="tag"]:has(span[title="Intel"]) { background-color: #0071C5 !important; }
+span[data-baseweb="tag"]:has(span[title="NVIDIA"]) {
+    background-color: #76B900 !important;
+}
+
+span[data-baseweb="tag"]:has(span[title="AMD"]) {
+    background-color: #ED1C24 !important;
+}
+
+span[data-baseweb="tag"]:has(span[title="Intel"]) {
+    background-color: #0071C5 !important;
+}
 
 span[data-baseweb="tag"]:has(span[title="NVIDIA"]) *,
 span[data-baseweb="tag"]:has(span[title="AMD"]) *,
 span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     color: white !important;
 }
-/* Page 1 */
 
+/* Page 1 */
 @property --num {
     syntax: '<integer>';
     initial-value: 0;
     inherits: false;
 }
+
 .hero-container {
     display: flex;
     flex-direction: row;
@@ -26,32 +35,47 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     opacity: 0;
     animation: fadeIn 1s forwards 0.2s;
 }
+
 .hero-col-left {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
 }
+
 .hero-col-right {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 }
-.top-left, .top-right { height: 3.8rem; }
-.bottom-left, .bottom-right { height: 2.6rem; margin-top: 5px; }
+
+.top-left,
+.top-right {
+    height: 3.8rem;
+}
+
+.bottom-left,
+.bottom-right {
+    height: 2.6rem;
+    margin-top: 5px;
+}
+
 .top-left {
     display: flex;
     align-items: flex-end;
     padding-bottom: 7px;
 }
+
 .top-right {
     display: flex;
     align-items: baseline;
     gap: 12px;
 }
+
 .bottom-right {
     display: flex;
     align-items: center;
 }
+
 .hero-app-name {
     font-size: 0.70rem;
     font-weight: 600;
@@ -59,6 +83,7 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     letter-spacing: 4px;
     opacity: 0.5;
 }
+
 .hero-number {
     font-size: 3.8rem;
     font-weight: 800;
@@ -66,9 +91,11 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     counter-reset: gpu-counter var(--num);
     animation: countUpAnim 2s ease-out forwards 0.4s;
 }
+
 .hero-number::after {
     content: counter(gpu-counter);
 }
+
 .hero-text-large {
     font-size: 2.2rem;
     font-weight: 300;
@@ -77,11 +104,13 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     line-height: 1;
     white-space: nowrap;
 }
+
 .brands-reveal {
     height: 2.6rem;
     overflow: hidden;
     position: relative;
 }
+
 .brands-rotor {
     display: flex;
     flex-direction: column;
@@ -91,22 +120,94 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     text-align: right;
     animation: spinBrands 6s infinite cubic-bezier(0.64, 0.04, 0.35, 1) 2.6s;
 }
+
 .brand-word {
     height: 2.6rem;
     line-height: 2.6rem;
 }
+
 @keyframes fadeIn {
-    to { opacity: 1; }
+    to {
+        opacity: 1;
+    }
 }
+
 @keyframes spinBrands {
-    0%, 15% { transform: translateY(0); }
-    30%, 45% { transform: translateY(-2.6rem); }
-    60%, 75% { transform: translateY(-5.2rem); }
-    90%, 100% { transform: translateY(-7.8rem); }
+
+    0%,
+    15% {
+        transform: translateY(0);
+    }
+
+    30%,
+    45% {
+        transform: translateY(-2.6rem);
+    }
+
+    60%,
+    75% {
+        transform: translateY(-5.2rem);
+    }
+
+    90%,
+    100% {
+        transform: translateY(-7.8rem);
+    }
+}
+
+.viz-dashboard-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 1.2rem 1.4rem;
+    margin: 2rem 0 1rem 0;
+    border: 1px solid #222;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.viz-header-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.viz-header-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #e0e0e0;
+    letter-spacing: 0.02em;
+}
+
+.viz-header-sub {
+    font-size: 0.78rem;
+    color: #777;
+    margin-top: 2px;
+}
+
+.viz-control-bar {
+    padding: 0.2rem 0;
+    margin-bottom: 0.6rem;
+}
+
+
+[data-testid="stPlotlyChart"] {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+[data-testid="stContainer"] {
+    transition: border-color 0.2s ease;
+}
+
+[data-testid="stContainer"]:hover {
+    border-color: #383838 !important;
 }
 
 /* Page 3 */
-.p3-root { font-family: "Source Sans Pro", sans-serif; }
+.p3-root {
+    font-family: "Source Sans Pro", sans-serif;
+}
 
 .p3-header {
     font-size: 1.75rem;
@@ -114,6 +215,7 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     color: #fafafa;
     margin-bottom: 0.15rem;
 }
+
 .p3-sub {
     font-size: 0.82rem;
     color: #888;
@@ -129,12 +231,14 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     padding: 1.5rem 1.8rem;
     margin-bottom: 0.8rem;
 }
+
 .gpu-name {
     font-size: 1.6rem;
     font-weight: 700;
     color: #fff;
     margin-bottom: 0.25rem;
 }
+
 .mfg-badge {
     display: inline-block;
     background: var(--mfg-color);
@@ -149,17 +253,20 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     box-shadow: none !important;
     text-shadow: none !important;
 }
+
 .spec-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
     gap: 0.6rem;
 }
+
 .spec-item {
     background: #1d1d1d;
     border: 1px solid #2a2a2a;
     border-radius: 7px;
     padding: 0.6rem 0.85rem;
 }
+
 .spec-label {
     font-size: 0.65rem;
     text-transform: uppercase;
@@ -167,6 +274,7 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     color: #666;
     margin-bottom: 0.15rem;
 }
+
 .spec-value {
     font-size: 0.95rem;
     font-weight: 600;
@@ -182,8 +290,21 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     text-align: center;
     margin-top: 0.75rem;
 }
-.score-lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: #777; margin-bottom: 0.2rem; }
-.score-val { font-size: 2.2rem; font-weight: 700; color: var(--mfg-color); line-height: 1; }
+
+.score-lbl {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #777;
+    margin-bottom: 0.2rem;
+}
+
+.score-val {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--mfg-color);
+    line-height: 1;
+}
 
 /* Userbenchmark badge */
 .ub-badge {
@@ -197,25 +318,32 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     align-items: center;
     gap: 0.3rem;
 }
+
 .ub-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
+
 .ub-site {
     font-size: 1.05rem;
     font-weight: 700;
     color: #fff;
     text-decoration: none;
 }
+
 .ub-site:hover {
     text-decoration: underline;
 }
+
 .ub-stat {
     font-size: 0.78rem;
     color: #888;
 }
-.ub-stat strong { color: #bbb; }
+
+.ub-stat strong {
+    color: #bbb;
+}
 
 /* Alt section */
 .alt-section-title {
@@ -228,6 +356,7 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     padding-bottom: 0.4rem;
     border-bottom: 1px solid #222;
 }
+
 .alt-card {
     background: #141414;
     border: 1px solid #222;
@@ -238,7 +367,11 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     gap: 0.9rem;
     margin-bottom: 0.55rem;
 }
-.alt-card:hover { border-color: #383838; }
+
+.alt-card:hover {
+    border-color: #383838;
+}
+
 .alt-rank {
     font-size: 1.3rem;
     font-weight: 700;
@@ -246,6 +379,7 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     min-width: 30px;
     text-align: center;
 }
+
 .alt-gpu-img {
     width: 72px;
     height: 46px;
@@ -254,6 +388,7 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     background: #1a1a1a;
     flex-shrink: 0;
 }
+
 .alt-gpu-img-placeholder {
     width: 72px;
     height: 46px;
@@ -261,8 +396,19 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     border-radius: 4px;
     flex-shrink: 0;
 }
-.alt-name { font-size: 0.92rem; font-weight: 600; color: #ddd; }
-.alt-meta { font-size: 0.72rem; color: #666; margin-top: 2px; }
+
+.alt-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #ddd;
+}
+
+.alt-meta {
+    font-size: 0.72rem;
+    color: #666;
+    margin-top: 2px;
+}
+
 .alt-ub-gif {
     width: 36px;
     height: 36px;
@@ -272,7 +418,25 @@ span[data-baseweb="tag"]:has(span[title="Intel"]) * {
     opacity: 0.85;
     transition: opacity 0.2s;
 }
-.alt-ub-gif:hover { opacity: 1; }
-.alt-score { font-size: 0.9rem; font-weight: 700; color: #aaa; white-space: nowrap; }
-.alt-price { font-size: 0.75rem; color: #999; white-space: nowrap; }
-.alt-bench { font-size: 0.72rem; color: #666; }
+
+.alt-ub-gif:hover {
+    opacity: 1;
+}
+
+.alt-score {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #aaa;
+    white-space: nowrap;
+}
+
+.alt-price {
+    font-size: 0.75rem;
+    color: #999;
+    white-space: nowrap;
+}
+
+.alt-bench {
+    font-size: 0.72rem;
+    color: #666;
+}

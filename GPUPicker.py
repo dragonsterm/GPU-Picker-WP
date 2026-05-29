@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="GPU Picker", layout="wide")
 
@@ -339,41 +340,318 @@ else:
         df_v = pd.DataFrame(V, columns=["Nilai V"], index=alternatif_names).sort_values(by="Nilai V", ascending=False)
         st.dataframe(df_v.style.format("{:.5f}"), use_container_width=True)
         
-        st.subheader("6. Visualisasi Data (SAW)")
+        st.markdown("""
+        <div class="viz-dashboard-header">
+            <div>
+                <div class="viz-header-title">Data Visualizations</div>
+                <div class="viz-header-sub">Select charts below to explore results</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        col_fig1, col_fig2 = st.columns(2)
+        plotly_layout = dict(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(22,22,22,0.8)',
+            font=dict(family="Inter, Source Sans Pro, sans-serif", color='#c0c0c0', size=12),
+            margin=dict(l=40, r=20, t=50, b=40),
+            hoverlabel=dict(bgcolor='#1e1e1e', font_color='#e0e0e0', font_size=12, bordercolor='#333'),
+            legend=dict(bgcolor='rgba(0,0,0,0)', bordercolor='#333', font=dict(size=11)),
+            xaxis=dict(gridcolor='#2a2a2a', zerolinecolor='#333'),
+            yaxis=dict(gridcolor='#2a2a2a', zerolinecolor='#333'),
+        )
         
-        with col_fig1:
-            st.markdown("##### Top 10 GPU Berdasarkan Nilai V")
+        MFG_COLORS = {'NVIDIA': '#76B900', 'AMD': '#ED1C24', 'Intel': '#0071C5', 'Other': '#888888'}
+        
+        st.markdown('<div class="viz-control-bar">', unsafe_allow_html=True)
+        ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([3, 1, 1])
+        
+        available_charts = [
+            "Top N GPU Ranking",
+            "Criteria Weight Distribution",
+            "Price vs Benchmark",
+            "Radar Comparison (Top 5)",
+            "Benchmark by Manufacturer",
+            "Memory vs Clock Heatmap",
+            "Release Year Trend",
+        ]
+        
+        with ctrl_col1:
+            selected_charts = st.multiselect(
+                "Choose Visualizations",
+                options=available_charts,
+                default=["Top N GPU Ranking"],
+                help="Pick which charts to display below."
+            )
+        with ctrl_col2:
+            top_n = st.slider("GPUs to show", 5, min(30, len(df_result)), 10, help="Controls ranking charts")
+        with ctrl_col3:
+            color_mode = st.selectbox("Color by", ["Manufacturer", "Ranking Tier"], help="Color scheme for charts")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        if not selected_charts:
+            st.info("Select at least one visualization from the dropdown above.")
+        
+        def get_tier_color(rank):
+            if rank <= 3: return '#FFD700'
+            elif rank <= 10: return '#C0C0C0'
+            elif rank <= 20: return '#CD7F32'
+            return '#555555'
+        
+        def get_color(row, mode):
+            if mode == "Manufacturer":
+                return MFG_COLORS.get(row.get('Manufacturer', ''), '#888')
+            return get_tier_color(row.get('Ranking', 99))
+    
+        def render_top_n_ranking():
+            top = df_result.head(top_n).sort_values(by="Nilai V", ascending=True)
             
-            top_10 = df_result.head(10).sort_values(by="Nilai V", ascending=True)
+            if color_mode == "Manufacturer":
+                colors = [MFG_COLORS.get(m, '#888') for m in top['Manufacturer']]
+            else:
+                colors = [get_tier_color(r) for r in top['Ranking']]
             
-            color_map = {
-                'NVIDIA': '#76B900',
-                'AMD': '#ED1C24',
-                'Intel': '#0071C5'
-            }
+            fig = go.Figure(go.Bar(
+                x=top['Nilai V'],
+                y=top['Name'],
+                orientation='h',
+                marker=dict(color=colors, line=dict(width=0)),
+                text=[f"{v:.4f}" for v in top['Nilai V']],
+                textposition='outside',
+                textfont=dict(size=10, color='#aaa'),
+                hovertemplate='<b>%{y}</b><br>V-Score: %{x:.5f}<br><extra></extra>',
+            ))
             
-            bar_colors = [color_map.get(mfg, '#888888') for mfg in top_10['Manufacturer']]
+            fig.update_layout(**plotly_layout)
+    
+            fig.update_layout(
+                title=dict(text=f'Top {top_n} GPU by SAW Score', font=dict(size=15, color='#e0e0e0')),
+                xaxis_title='SAW Score (V)',
+                yaxis=dict(gridcolor='rgba(0,0,0,0)'),
+                height=max(350, top_n * 32),
+                showlegend=False,
+            )
+            st.plotly_chart(fig, use_container_width=True, key="chart_ranking")
+        
+        def render_weight_donut():
+            fig = go.Figure(go.Pie(
+                labels=kriteria_names,
+                values=w_aktif,
+                hole=0.55,
+                marker=dict(
+                    colors=px.colors.qualitative.Set3[:len(kriteria_names)],
+                    line=dict(color='#1a1a1a', width=2)
+                ),
+                textinfo='label+percent',
+                textfont=dict(size=11, color='#ccc'),
+                hovertemplate='<b>%{label}</b><br>Weight: %{value:.4f}<br>Share: %{percent}<extra></extra>',
+            ))
             
-            fig1, ax1 = plt.subplots(figsize=(7, 5))
+            fig.update_layout(**plotly_layout)
             
-            ax1.barh(top_10['Name'], top_10['Nilai V'], color=bar_colors)
-            ax1.set_xlabel('Nilai V (Score Akhir)')
-            ax1.set_title('Top 10 GPU Rekomendasi')
-            plt.tight_layout()
-            st.pyplot(fig1)
+            fig.update_layout(
+                title=dict(text='Criteria Weight Distribution', font=dict(size=15, color='#e0e0e0')),
+                height=400,
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5, font=dict(size=10, color='#aaa')),
+                annotations=[dict(text='Weights', x=0.5, y=0.5, font_size=14, font_color='#666', showarrow=False)],
+            )
+            st.plotly_chart(fig, use_container_width=True, key="chart_donut")
+        
+        def render_price_vs_benchmark():
+            scatter_df = df_result.head(top_n).copy()
+            
+            fig = px.scatter(
+                scatter_df,
+                x='Price',
+                y='Benchmark_Score',
+                size='Memory_GB',
+                color='Manufacturer',
+                color_discrete_map=MFG_COLORS,
+                hover_name='Name',
+                hover_data={
+                    'Price': ':,.0f',
+                    'Benchmark_Score': ':.1f',
+                    'Memory_GB': ':.0f',
+                    'Ranking': True,
+                    'Manufacturer': False,
+                },
+                size_max=35,
+            )
 
-        with col_fig2:
-            st.markdown("##### Proporsi Bobot Kriteria (w)")
-            fig2, ax2 = plt.subplots(figsize=(6, 5))
+            fig.update_layout(**plotly_layout)
             
-            colors = plt.cm.Set3.colors
-            ax2.pie(w_aktif, labels=kriteria_names, autopct='%1.1f%%', startangle=140, colors=colors)
-            ax2.axis('equal')
-            ax2.set_title('Distribusi Kepentingan Kriteria')
-            plt.tight_layout()
-            st.pyplot(fig2)
+            fig.update_layout(
+                title=dict(text='Price vs Benchmark (bubble = Memory GB)', font=dict(size=15, color='#e0e0e0')),
+                xaxis_title='Price (IDR)',
+                yaxis_title='Benchmark Score',
+                height=450,
+            )
+            fig.update_traces(marker=dict(line=dict(width=1, color='#333'), opacity=0.85))
+            st.plotly_chart(fig, use_container_width=True, key="chart_scatter")
+        
+        def render_radar():
+            top5 = df_result.head(5)
+            radar_cols = [c for c in cols_aktif]
+            
+            fig = go.Figure()
+            
+            color_palette = ['#76B900', '#ED1C24', '#0071C5', '#FFD700', '#FF6B9D']
+            
+            for i, (_, row) in enumerate(top5.iterrows()):
+                row_idx = df_eval.index.get_loc(row.name) if row.name in df_eval.index else i
+                if row_idx < R.shape[0]:
+                    r_vals = [R[row_idx, cols_aktif.index(c)] if c in cols_aktif else 0 for c in radar_cols]
+                else:
+                    continue
+                r_vals_closed = r_vals + [r_vals[0]]
+                theta_closed = [kriteria_names[cols_aktif.index(c)] for c in radar_cols] + [kriteria_names[cols_aktif.index(radar_cols[0])]]
+                
+                clr = color_palette[i % len(color_palette)]
+                fig.add_trace(go.Scatterpolar(
+                    r=r_vals_closed,
+                    theta=theta_closed,
+                    name=f"#{int(row['Ranking'])} {row['Name']}",
+                    fill='toself',
+                    fillcolor=f"rgba({int(clr[1:3],16)},{int(clr[3:5],16)},{int(clr[5:7],16)},0.08)",
+                    line=dict(color=clr, width=2),
+                    hovertemplate='%{theta}: %{r:.3f}<extra>%{fullData.name}</extra>',
+                ))
+            
+            fig.update_layout(**plotly_layout)
+            
+            fig.update_layout(
+                title=dict(text='Radar Comparison — Top 5 GPUs', font=dict(size=15, color='#e0e0e0')),
+                polar=dict(
+                    bgcolor='rgba(22,22,22,0.6)',
+                    radialaxis=dict(visible=True, range=[0, 1.05], gridcolor='#2a2a2a', linecolor='#333', tickfont=dict(size=9, color='#666')),
+                    angularaxis=dict(gridcolor='#2a2a2a', linecolor='#333', tickfont=dict(size=10, color='#aaa')),
+                ),
+                height=480,
+                showlegend=True,
+                legend=dict(font=dict(size=10)),
+            )
+            st.plotly_chart(fig, use_container_width=True, key="chart_radar")
+        
+        def render_benchmark_box():
+            fig = px.box(
+                df_result,
+                x='Manufacturer',
+                y='Benchmark_Score',
+                color='Manufacturer',
+                color_discrete_map=MFG_COLORS,
+                points='all',
+                hover_data=['Name', 'Price'],
+            )
+            
+            fig.update_layout(**plotly_layout)
+            
+            fig.update_layout(
+                title=dict(text='Benchmark Distribution by Manufacturer', font=dict(size=15, color='#e0e0e0')),
+                xaxis_title='',
+                yaxis_title='Benchmark Score',
+                height=420,
+                showlegend=False,
+            )
+            fig.update_traces(marker=dict(size=5, opacity=0.6), jitter=0.3)
+            st.plotly_chart(fig, use_container_width=True, key="chart_box")
+        
+        def render_mem_clock_heatmap():
+            fig = px.scatter(
+                df_result.head(top_n),
+                x='Memory_GB',
+                y='GPU_Clock_MHz',
+                color='Nilai V',
+                color_continuous_scale=['#1a1a2e', '#16213e', '#0f3460', '#e94560', '#FFD700'],
+                hover_name='Name',
+                hover_data={
+                    'Memory_GB': ':.0f',
+                    'GPU_Clock_MHz': ':.0f',
+                    'Nilai V': ':.4f',
+                    'Manufacturer': True,
+                },
+                size='Benchmark_Score',
+                size_max=30,
+            )
+            
+            fig.update_layout(**plotly_layout)
+            
+            fig.update_layout(
+                title=dict(text='Memory vs GPU Clock (color = V-Score)', font=dict(size=15, color='#e0e0e0')),
+                xaxis_title='Memory (GB)',
+                yaxis_title='GPU Clock (MHz)',
+                height=420,
+                coloraxis_colorbar=dict(
+                    title=dict(text='V-Score', font=dict(size=11, color='#aaa')), 
+                    tickfont=dict(size=10, color='#aaa')
+                ),
+            )
+            fig.update_traces(marker=dict(line=dict(width=1, color='#333'), opacity=0.85))
+            st.plotly_chart(fig, use_container_width=True, key="chart_heatmap")
+        
+        def render_year_trend():
+            trend = df_result.groupby('Release_Year').agg(
+                Avg_Benchmark=('Benchmark_Score', 'mean'),
+                Count=('Name', 'count'),
+                Avg_V=('Nilai V', 'mean'),
+            ).reset_index()
+            
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=trend['Release_Year'],
+                y=trend['Avg_Benchmark'],
+                mode='lines+markers',
+                name='Avg Benchmark',
+                line=dict(color='#76B900', width=2.5, shape='spline'),
+                marker=dict(size=trend['Count'] * 2 + 4, color='#76B900', line=dict(width=1, color='#333')),
+                hovertemplate='<b>Year %{x:.0f}</b><br>Avg Benchmark: %{y:.1f}<br>GPUs: %{marker.size}<extra></extra>',
+            ))
+            fig.add_trace(go.Bar(
+                x=trend['Release_Year'],
+                y=trend['Count'],
+                name='GPU Count',
+                marker=dict(color='rgba(118,185,0,0.15)', line=dict(width=0)),
+                yaxis='y2',
+                hovertemplate='Year %{x:.0f}<br>Count: %{y}<extra></extra>',
+            ))
+            
+            fig.update_layout(**plotly_layout)
+            
+            fig.update_layout(
+                title=dict(text='Benchmark Trend by Release Year', font=dict(size=15, color='#e0e0e0')),
+                xaxis_title='Release Year',
+                yaxis=dict(title='Avg Benchmark Score', gridcolor='#2a2a2a', zerolinecolor='#333'),
+                yaxis2=dict(title=dict(text='GPU Count', font=dict(color='#555')), overlaying='y', side='right', showgrid=False, tickfont=dict(color='#555')),
+                height=400,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            )
+            st.plotly_chart(fig, use_container_width=True, key="chart_trend")
+        
+        chart_dispatch = {
+            "Top N GPU Ranking": render_top_n_ranking,
+            "Criteria Weight Distribution": render_weight_donut,
+            "Price vs Benchmark": render_price_vs_benchmark,
+            "Radar Comparison (Top 5)": render_radar,
+            "Benchmark by Manufacturer": render_benchmark_box,
+            "Memory vs Clock Heatmap": render_mem_clock_heatmap,
+            "Release Year Trend": render_year_trend,
+        }
+        
+        if selected_charts:
+            for i in range(0, len(selected_charts), 2):
+                pair = selected_charts[i:i+2]
+                if len(pair) == 2:
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        with st.container(border=True):
+                            chart_dispatch[pair[0]]()
+                    with col_b:
+                        with st.container(border=True):
+                            chart_dispatch[pair[1]]()
+                else:
+                    with st.container(border=True):
+                        chart_dispatch[pair[0]]()
+
 
     # Page 3 hasil dan rekomendasi
     elif page == "Page 3 - Result & Recommendation":
@@ -473,7 +751,9 @@ else:
                 bench_str = f"Average Benchmark: <strong>{float(ub_bench):.1f}%</strong>" if ub_bench and not pd.isna(ub_bench) else ""
                 stat_line = " &nbsp;&bull;&nbsp; ".join(filter(None, [rank_str, bench_str]))
                 gif_img   = f'<img src="{gif_b64}" width="44" height="44" style="object-fit:contain;">' if gif_b64 else ""
-                logo_img  = f'<a class="ub-site" href="{ub_url}" target="_blank">UserBenchmark.com</a>'
+                
+                logo_img  = f'<a class="ub-site" href="{ub_url}" target="_blank" style="color: white; text-decoration: none;">UserBenchmark.com</a>'
+                
                 st.markdown(f"""
                 <div class="ub-badge">
                     <div class="ub-row">
