@@ -5,3 +5,22 @@ scrapper/Category_ VGA - Enterkomputer Toko Online Komputer, Simulasi & Rakit PC
 
 # vscode specific files
 .vscode/
+
+# Python caching and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook settings
+.ipynb_checkpoints/
+
+# Streamlit specific
+.streamlit/
