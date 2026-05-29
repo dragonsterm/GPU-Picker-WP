@@ -75,57 +75,64 @@ with st.sidebar:
     
     template = st.selectbox("Pilih Template Preferensi", ["Manual", "Gaming", "Price to Performance", "Content Creation"])
     
+    all_criteria = [
+        "Harga (Cost)", "Memory GB (Benefit)", "GPU Clock (Benefit)", 
+        "Memory Clock (Benefit)", "Cores (Benefit)", "Tahun Rilis (Benefit)", "Benchmark (Benefit)"
+    ]
+    
+    default_4_criteria = ["Harga (Cost)", "Memory GB (Benefit)", "Tahun Rilis (Benefit)", "Benchmark (Benefit)"]
+    
+    
     # nilai pengaturan
     if template == "Gaming":
         t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.10, 0.15, 0.10, 0.10, 0.10, 0.15, 0.30
+        active_defaults = all_criteria
     elif template == "Price to Performance":
-        t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.25, 0.05, 0.05, 0.05, 0.05, 0.20, 0.35
+        t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.35, 0.10, 0.0, 0.0, 0.0, 0.20, 0.35
+        active_defaults = default_4_criteria
     elif template == "Content Creation":
         t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.10, 0.25, 0.05, 0.05, 0.20, 0.15, 0.20
+        active_defaults = all_criteria
     else:
-        t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.15, 0.10, 0.10, 0.10, 0.10, 0.15, 0.30
+        t_price, t_mem, t_gclk, t_mclk, t_core, t_year, t_bench = 0.25, 0.10, 0.10, 0.10, 0.10, 0.20, 0.25
+        active_defaults = default_4_criteria
         
     st.markdown("#### Bobot Kriteria")
     d_disable = template != "Manual"
     
-    # Harga
-    use_price = st.toggle("Gunakan Harga (Cost)", value=True)
-    bar_price = st.slider("Bobot Harga", min_value=0.01, max_value=1.00, value=t_price, step=0.01, disabled=d_disable or not use_price)
+    active_criteria = st.multiselect(
+        "Pilih Kriteria Aktif",
+        options=all_criteria,
+        default=active_defaults
+    )
     
-    # Memory
-    use_mem = st.toggle("Gunakan Memory GB (Benefit)", value=True)
-    bar_mem = st.slider("Bobot Memory GB", min_value=0.01, max_value=1.00, value=t_mem, step=0.01, disabled=d_disable or not use_mem)
+    use_price = "Harga (Cost)" in active_criteria
+    use_mem   = "Memory GB (Benefit)" in active_criteria
+    use_gclk  = "GPU Clock (Benefit)" in active_criteria
+    use_mclk  = "Memory Clock (Benefit)" in active_criteria
+    use_core  = "Cores (Benefit)" in active_criteria
+    use_year  = "Tahun Rilis (Benefit)" in active_criteria
+    use_bench = "Benchmark (Benefit)" in active_criteria
+
+    bar_price = bar_mem = bar_gclk = bar_mclk = bar_core = bar_year = bar_bench = 0.0
     
-    # GPU Clock
-    use_gclk = st.toggle("Gunakan GPU Clock (Benefit)", value=True)
-    bar_gclk = st.slider("Bobot GPU Clock", min_value=0.01, max_value=1.00, value=t_gclk, step=0.01, disabled=d_disable or not use_gclk)
+    if use_price:
+        bar_price = st.slider("Bobot Harga", 0.01, 1.00, t_price, 0.01, disabled=d_disable)
+    if use_mem:
+        bar_mem = st.slider("Bobot Memory GB", 0.01, 1.00, t_mem, 0.01, disabled=d_disable)
+    if use_gclk:
+        bar_gclk = st.slider("Bobot GPU Clock", 0.01, 1.00, t_gclk, 0.01, disabled=d_disable)
+    if use_mclk:
+        bar_mclk = st.slider("Bobot Memory Clock", 0.01, 1.00, t_mclk, 0.01, disabled=d_disable)
+    if use_core:
+        bar_core = st.slider("Bobot Cores", 0.01, 1.00, t_core, 0.01, disabled=d_disable)
+    if use_year:
+        bar_year = st.slider("Bobot Tahun Rilis", 0.01, 1.00, t_year, 0.01, disabled=d_disable)
+    if use_bench:
+        bar_bench = st.slider("Bobot Benchmark", 0.01, 1.00, t_bench, 0.01, disabled=d_disable)
     
-    # Memory Clock
-    use_mclk = st.toggle("Gunakan Memory Clock (Benefit)", value=True)
-    bar_mclk = st.slider("Bobot Memory Clock", min_value=0.01, max_value=1.00, value=t_mclk, step=0.01, disabled=d_disable or not use_mclk)
-    
-    # Cores
-    use_core = st.toggle("Gunakan Cores (Benefit)", value=True)
-    bar_core = st.slider("Bobot Cores", min_value=0.01, max_value=1.00, value=t_core, step=0.01, disabled=d_disable or not use_core)
-    
-    # Tahun Rilis
-    use_year = st.toggle("Gunakan Tahun Rilis (Benefit)", value=True)
-    bar_year = st.slider("Bobot Tahun Rilis", min_value=0.01, max_value=1.00, value=t_year, step=0.01, disabled=d_disable or not use_year)
-    
-    # Benchmark
-    use_bench = st.toggle("Gunakan Benchmark (Benefit)", value=True)
-    bar_bench = st.slider("Bobot Benchmark", min_value=0.01, max_value=1.00, value=t_bench, step=0.01, disabled=d_disable or not use_bench)
-    
-    # Menghitung bobot W berdasarkan status Toggle
-    bobot_awal = np.array([
-        bar_price if use_price else 0.0,
-        bar_mem if use_mem else 0.0,
-        bar_gclk if use_gclk else 0.0,
-        bar_mclk if use_mclk else 0.0,
-        bar_core if use_core else 0.0,
-        bar_year if use_year else 0.0,
-        bar_bench if use_bench else 0.0
-    ])
+    # Menghitung bobot W
+    bobot_awal = np.array([bar_price, bar_mem, bar_gclk, bar_mclk, bar_core, bar_year, bar_bench])
     
     if np.sum(bobot_awal) == 0:
         st.warning("Silakan aktifkan setidaknya satu kriteria SPK.")
