@@ -1,4 +1,4 @@
-# GPU Picker-Using Weighted Product
+# GPU Picker-Using SAW
 
 ---
 
